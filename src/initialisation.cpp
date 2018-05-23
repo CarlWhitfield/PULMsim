@@ -298,6 +298,24 @@ int initialise_lung_volumes(Tree &stree, vector<Tree> &ltree, Options &o)
 				if (i != ltree[n].st[i].isub[p]) ltree[n].st[i].totIGvol += ltree[n].st[ltree[n].st[i].isub[p]].totIGvol;
 			}
 		}
+		
+		ltree[n].masstot = 0;
+		vector<double> dmtotold;
+		for (unsigned i = 0; i < ltree[n].st.size(); i++)
+		{
+			unsigned istree = ltree[n].st[i].i_stree;
+			dmtotold.push_back(ltree[n].st[i].masstot);
+			ltree[n].st[i].masstot = 0;
+			for (unsigned j = ltree[n].st[i].StartGen; j <= ltree[n].st[i].EndGen; j++)
+			{
+				unsigned Nj = ((unsigned)ltree[n].st[i].gn[j].p.size());
+				for (unsigned k = 0; k < Nj; k++)
+				{
+					if (j>0 || k > 0) ltree[n].st[i].masstot += ((double)ltree[n].st[i].gn[j].Nb)*(stree.st[istree].gn[j].p[k].Anew*stree.st[istree].gn[j].p[k].c*ltree[n].st[i].gn[j].dx + stree.st[istree].gn[j].p[k].Anew*ltree[n].st[i].gn[j].p[k].c*stree.st[istree].gn[j].dx + ltree[n].st[i].gn[j].p[k].Anew*stree.st[istree].gn[j].p[k].c*stree.st[istree].gn[j].dx);
+				}
+			}
+			ltree[n].masstot += ltree[n].st[i].masstot;
+		}
 	}
 	return 0;
 }

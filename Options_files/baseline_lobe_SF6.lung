@@ -1,17 +1,17 @@
 %Comments start with a %
 %Options
-TREE n          %Tree type: l= linear perturbation, n=no pert
+TREE n          %Tree type: s=symmetric pert, l= linear perturbation, n=no pert
 BC n              %Boundary condition: b=bag, n=no flux
 UPWIND f          %Upwind interpolation: c = central, f=first order upwind
 PRESSURE w        %Pressure function: s=sigmoidal, d=level set, w=sinusoidal, l=linear
 RESP l            %Elastic response function: l=linear, n=nonlinear
 FLOW p            %Flow type: p = poiseuille, t = pedley model
-SHAPE a           %Distribution of airway lengths and widths (g = geometric, h = homogenised, w = weibel data, , a = lobar regional model)
+SHAPE a           %Distribution of airway lengths and widths (g = geometric, h = homogenised, w = weibel data, l = lobar geometric, a = alt lobar geometric)
 SOLVER i          %Linear solver method (i = iterative (faster), d = direct (exact))
 TAYLOR s          %Include Taylor Dispersion in diffusion term (t = true, f = false, s = scherer type)
 INIT f            %Initialisation condition (e = empty lung, f = full lung)
 INPUT v           %Input for flow (v=volume/flow rate , p=pleural pressure)
-OUTPUT v          %Output format: c=csv, v=vtk, b=both
+OUTPUT c          %Output format: c=csv, v=vtk, b=both
 CPOUT t           %Print perturbed conc files? t or f
 LUOUT t           %Output acinar vols and concs to flux file? t or f
 
@@ -34,17 +34,14 @@ Tin 2.5               %Duration of first breath in (s)
 P0 1.0                %Pressure applied for breath (cm H20)if using pressure option - tidal volume if using volume option
 Lambda 0.794          %geometric ratio of channel lengths
 Lambda2 0.93          %geometric ratio of acinar airways/ducts
-RunTime 40            %number of breaths to simulate (in or out)
+RunTime 50            %number of breaths to simulate (in or out)
 StimTime 0            %Time that c=1 conc is held at opening (in breaths)
-Printerval 0.02         %Time between data outputs (fractions of first breath)
-PrerunTime 10
+Printerval 10        %Time between data outputs (fractions of first breath)
+PrerunTime 50
 Diffusion 0.105       % Approx 0.71 For Helium, 0.105 for SF6 and 0.225 for N2
 MaxPeclet 10          % Max peclet number in a single element (u0 * dx / D)
 MinGenSize 1          % Min number of cells to form generation in conducting region
 MinAcinGenSize 4      % Min gen size in acinus
 dx 0.025              % Min space step (in units of total lung length)
 dt 0.01               % Time step (in units of Tin)
-Y 0.5                 % Fraction of extra area for diffusion in acinus (phi)
-
-%DEFECTS
-2 0 0 a -0.7 RU   %Specifies a defect: 1) Generation (in subtree) 2) Branch number (start, >=0) 3) Branch number (end <= 2^gen-1) 4) Type (a=area,l=length,e=elastance,b=blocked) 5) Magnitude (fraction >-1) 6) Lobe region code (0 if symmetric tree)
+Y 0.5                 % Fraction of extra area for diffusion in acinus

@@ -94,9 +94,12 @@ void fill_Ab(Tree &stree, Eigen::SparseMatrix<double, Eigen::RowMajor> &AC, Eige
 			unsigned Nj = ((unsigned)stree.st[i].gn[j].p.size());  //no. of nodes in this gen
 			unsigned ih, jh, kh;
 
-			vector<double> ucfr[3], ucfl[3], dcfr[3], dcfl[3];   //finite difference coeffs
 			for (unsigned k = k0; k < Nj; k++)
 			{
+				vector<double> ucfr[3], ucfl[3], dcfr[3], dcfl[3];   //finite difference coeffs
+				unsigned iright0 = stree.st[i].gn[j].p[k].iup[2][0];
+				unsigned jright0 = stree.st[i].gn[j].p[k].jup[2][0];
+				unsigned kright0 = stree.st[i].gn[j].p[k].kup[2][0];
 				vector<double> cd0[3];
 				unsigned nodes_right = ((unsigned)stree.st[i].gn[j].p[k].iup[2].size());
 				for (unsigned n = 0; n < 3; n++)   //vector of positions of nearest 3 points
@@ -105,6 +108,24 @@ void fill_Ab(Tree &stree, Eigen::SparseMatrix<double, Eigen::RowMajor> &AC, Eige
 					ih = stree.st[i].gn[j].p[k].iup[n][0];  //indices of neighbouring points
 					jh = stree.st[i].gn[j].p[k].jup[n][0];
 					kh = stree.st[i].gn[j].p[k].kup[n][0];
+					dcfr[n] = stree.st[i].gn[j].p[k].dcfr[n];
+					dcfl[n] = stree.st[i].gn[j].p[k].dcfl[n];
+					if (stree.st[i].gn[j].p[k].ul > 0) //ful determined by ul velocity
+					{
+						ucfl[n].push_back(stree.st[i].gn[j].p[k].ucflpos[n][0]);
+					}
+					else
+					{
+						ucfl[n].push_back(stree.st[i].gn[j].p[k].ucflneg[n][0]);
+					}
+					if (stree.st[iright0].gn[jright0].p[kright0].ul > 0)  //fur determined by ul at next point along (at bifuractions this can be different for m=0 and m=1
+					{
+						ucfr[n].push_back(stree.st[i].gn[j].p[k].ucfrpos[n][0]);    //upwind coefficients
+					}
+					else
+					{
+						ucfr[n].push_back(stree.st[i].gn[j].p[k].ucfrneg[n][0]);
+					}
 					cd0[n].push_back(stree.st[ih].gn[jh].p[kh].cold);     //conc at neighbour points
 					if (n == 2 && nodes_right>1)
 					{
@@ -113,17 +134,30 @@ void fill_Ab(Tree &stree, Eigen::SparseMatrix<double, Eigen::RowMajor> &AC, Eige
 						kh = stree.st[i].gn[j].p[k].kup[n][1];
 						cd0[n].push_back(stree.st[ih].gn[jh].p[kh].cold);     //conc at neighbour points
 					}
-					dcfr[n] = stree.st[i].gn[j].p[k].dcfr[n];
-					dcfl[n] = stree.st[i].gn[j].p[k].dcfl[n];
-					if (stree.st[i].gn[j].p[k].ul > 0)
+				}
+				if(nodes_right>1)
+				{
+					for (unsigned n = 0; n < 3; n++)   //vector of positions of nearest 3 points
 					{
-						ucfr[n] = stree.st[i].gn[j].p[k].ucfrpos[n];    //upwind coefficients
-						ucfl[n] = stree.st[i].gn[j].p[k].ucflpos[n];
-					}
-					else
-					{
-						ucfr[n] = stree.st[i].gn[j].p[k].ucfrneg[n];
-						ucfl[n] = stree.st[i].gn[j].p[k].ucflneg[n];
+						unsigned iright1 = stree.st[i].gn[j].p[k].iup[2][1];
+						unsigned jright1 = stree.st[i].gn[j].p[k].jup[2][1];
+						unsigned kright1 = stree.st[i].gn[j].p[k].kup[2][1];
+						if (stree.st[i].gn[j].p[k].ul > 0)
+						{
+							ucfl[n].push_back(stree.st[i].gn[j].p[k].ucflpos[n][1]);
+						}
+						else
+						{
+							ucfl[n].push_back(stree.st[i].gn[j].p[k].ucflneg[n][1]);
+						}
+						if (stree.st[iright1].gn[jright1].p[kright1].ul > 0)  //fur determined by ul at next point along
+						{
+							ucfr[n].push_back(stree.st[i].gn[j].p[k].ucfrpos[n][1]);    //upwind coefficients
+						}
+						else
+						{
+							ucfr[n].push_back(stree.st[i].gn[j].p[k].ucfrneg[n][1]);
+						}
 					}
 				}
 
@@ -461,6 +495,10 @@ void fill_Ab_lp(Tree &ltree, Tree &stree, Eigen::SparseMatrix<double, Eigen::Row
 				vector<double> dcd0[3], cd0[3], cd0old[3];
 				vector<double> ucfr[3], ucfl[3], dcfr[3], dcfl[3];
 				vector<double> ducfr[3], ducfl[3], ddcfr[3], ddcfl[3];
+				unsigned istreeright0 = stree.st[istree].gn[j].p[k].iup[2][0];
+				unsigned jright0 = ltree.st[i].gn[j].p[k].jup[2][0];
+				unsigned kright0 = ltree.st[i].gn[j].p[k].kup[2][0];
+				unsigned stree_nodes_right = ((unsigned) stree.st[istree].gn[j].p[k].iup[2].size());
 				unsigned nodes_right = ((unsigned)ltree.st[i].gn[j].p[k].iup[2].size());
 				for (unsigned n = 0; n < 3; n++)  //vector of positions of nearest 3 points
 				{
@@ -482,30 +520,84 @@ void fill_Ab_lp(Tree &ltree, Tree &stree, Eigen::SparseMatrix<double, Eigen::Row
 					dcfl[n] = stree.st[istree].gn[j].p[k].dcfl[n];
 					ddcfr[n] = ltree.st[i].gn[j].p[k].dcfr[n];
 					ddcfl[n] = ltree.st[i].gn[j].p[k].dcfl[n];
-					if (stree.st[istree].gn[j].p[k].ul > 0)
+					if (stree.st[istree].gn[j].p[k].ul > 0) //upwind determined by ul velocity
 					{
-						ucfr[n] = stree.st[istree].gn[j].p[k].ucfrpos[n];   //finite difference coefficients
-						ucfl[n] = stree.st[istree].gn[j].p[k].ucflpos[n];
-						ducfr[n] = ltree.st[i].gn[j].p[k].ucfrpos[n];
-						ducfl[n] = ltree.st[i].gn[j].p[k].ucflpos[n];
+						ucfl[n].push_back(stree.st[istree].gn[j].p[k].ucflpos[n][0]);
+						ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflpos[n][0]);
 					}
 					else
 					{
-						ucfr[n] = stree.st[istree].gn[j].p[k].ucfrneg[n];
-						ucfl[n] = stree.st[istree].gn[j].p[k].ucflneg[n];
-						ducfr[n] = ltree.st[i].gn[j].p[k].ucfrneg[n];
-						ducfl[n] = ltree.st[i].gn[j].p[k].ucflneg[n];
+						ucfl[n].push_back(stree.st[istree].gn[j].p[k].ucflneg[n][0]);
+						ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflneg[n][0]);
+					}
+					if (stree.st[istreeright0].gn[jright0].p[kright0].ul > 0)  //fur determined by ul at next point along (at bifuractions this can be different for m=0 and m=1
+					{
+						ucfr[n].push_back(stree.st[istree].gn[j].p[k].ucfrpos[n][0]);    //upwind coefficients
+						ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrpos[n][0]);    //upwind coefficients
+					}
+					else
+					{
+						ucfr[n].push_back(stree.st[istree].gn[j].p[k].ucfrneg[n][0]);
+						ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrneg[n][0]);
 					}
 				}
 
-				if (nodes_right > stree.st[istree].gn[j].p[k].iup[2].size())   //re-size stree vectors to account for new tree structure
+				if (nodes_right > 1)   //re-size stree vectors to account for new tree structure
 				{
-					for (unsigned n = 0; n < 3; n++)
+					unsigned jright1 = ltree.st[i].gn[j].p[k].jup[2][1];
+					unsigned kright1 = ltree.st[i].gn[j].p[k].kup[2][1];
+					if (stree_nodes_right > 1)
 					{
-						ucfr[n].push_back(ucfr[n][0]);
-						dcfr[n].push_back(dcfr[n][0]);
-						ucfl[n].push_back(ucfl[n][0]);
-						dcfl[n].push_back(dcfl[n][0]);
+						unsigned istreeright1 = stree.st[istree].gn[j].p[k].iup[2][1];
+						for (unsigned n = 0; n < 3; n++)
+						{
+							if (stree.st[istree].gn[j].p[k].ul > 0)
+							{
+								ucfl[n].push_back(stree.st[istree].gn[j].p[k].ucflpos[n][1]);
+								ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflpos[n][1]);
+							}
+							else
+							{
+								ucfl[n].push_back(stree.st[istree].gn[j].p[k].ucflneg[n][1]);
+								ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflneg[n][1]);
+							}
+							if (stree.st[istreeright1].gn[jright1].p[kright1].ul > 0)  //fur determined by ul at next point along
+							{
+								ucfr[n].push_back(stree.st[istree].gn[j].p[k].ucfrpos[n][1]);    //upwind coefficients
+								ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrpos[n][1]);    //upwind coefficients
+							}
+							else
+							{
+								ucfr[n].push_back(stree.st[istree].gn[j].p[k].ucfrneg[n][1]);
+								ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrneg[n][1]);
+							}
+						}
+					}
+					else
+					{
+						for (unsigned n = 0; n < 3; n++)
+						{
+							if (stree.st[istree].gn[j].p[k].ul > 0)
+							{
+								ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflpos[n][1]);
+							}
+							else
+							{
+								ducfl[n].push_back(ltree.st[i].gn[j].p[k].ucflneg[n][1]);
+							}
+							if (stree.st[istreeright0].gn[jright0].p[kright0].ul > 0)  //fur determined by ul at next point along
+							{
+								ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrpos[n][1]);    //upwind coefficients
+							}
+							else
+							{
+								ducfr[n].push_back(ltree.st[i].gn[j].p[k].ucfrneg[n][1]);
+							}
+							ucfr[n].push_back(ucfr[n][0]);
+							ucfl[n].push_back(ucfl[n][0]);
+							dcfr[n].push_back(dcfr[n][0]);
+							dcfl[n].push_back(dcfl[n][0]);
+						}
 					}
 				}
 

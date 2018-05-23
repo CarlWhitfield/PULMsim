@@ -515,7 +515,7 @@ int append_masterout(string filename, double time, Tree &tree, Options &o, Conve
 	//cout << mf.good() << ' ' << mf.eof() << ' ' << mf.fail() <<  ' ' << mf.bad() << '\n';
 //	if(!mf.good()) return 1;
 	
-	mf << setprecision(OUTPUT_PRECISION_FLUX);
+	mf << fixed << setprecision(OUTPUT_PRECISION_FLUX);
 	mf << (time + o.dt)*cons.t_to_s << " , " << tree.Vlung*cons.V_to_Litres << " , " << tree.st[0].Vnew*cons.V_to_Litres << " , "
 		<< tree.masstot*cons.V_to_Litres << " , " << tree.cmouth << " , " << tree.Ppl*cons.P_to_cmH20 << " , "
 		<< (time + 0.5*o.dt)*cons.t_to_s << " , " << (tree.st[0].Vnew - tree.st[0].Vold)*cons.V_to_Litres / (o.dt*cons.t_to_s) << " , "

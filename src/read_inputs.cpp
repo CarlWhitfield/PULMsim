@@ -1211,8 +1211,11 @@ string read_lobe_no(unsigned i, Options &o)
 	{
 		case GEOMETRIC:
 		case HOMOGENISED:
-			return "symm";
-			break;
+		{
+			stringstream ss;
+			ss << i;
+			return ss.str().c_str();
+		} break;
 			
 		case ALT_LOBE_GEOMETRIC:
 		case LOBE_GEOMETRIC:
@@ -1257,6 +1260,13 @@ string read_lobe_no(unsigned i, Options &o)
 					
 				case BLL2: return "LLmin";
 					break;
+					
+				default:
+				{
+					stringstream ss;
+					ss << i;
+					return ss.str().c_str();
+				} break;
 			}
 		}
 	}
